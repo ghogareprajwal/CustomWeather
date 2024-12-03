@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -8,16 +8,25 @@ import { Observable } from 'rxjs';
 export class WeatherService {
 
   private apiUrl = 'https://xml.customweather.com/xml';
+  private baseUrl = 'http://cws.customweather.com/data';
   // private client = 'cognitive'; // Add your client ID
   // private clientPassword = '59kjGu3WXm'; // Add your client password
 
   constructor(private http: HttpClient) { }
 
   // getWeatherData(lat: number, lon: number): Observable<any> {
-  //   const url = `${this.apiUrl}?client=${this.client}&client_password=${this.clientPassword}&product=hourly_forecast&latitude=${lat}&longitude=${lon}`;
-  //   console.log(url)
-
-  //   return this.http.get(url, { responseType: 'text' });
+  //   const params = new URLSearchParams({
+  //     client: 'cognitive',
+  //     client_password: '59kjGu3WXm',
+  //     product: 'hourly_forecast',
+  //     latitude: lat.toString(),
+  //     longitude: lon.toString(),
+  //   });
+  //   const url = `${this.apiUrl}?${params}`;
+  //   const headers = new HttpHeaders({
+  //     'Accept': 'application/json'
+  //   });
+  //   return this.http.get(url, { headers });
   // }
 
   getWeatherData(lat: number, lon: number): Observable<string> {
@@ -34,8 +43,29 @@ export class WeatherService {
     });
   }
 
+  getCustomWeatherData(
+    latitude: number,
+    longitude: number,
+    start: string,
+    end: string
+  ): Observable<any> {
+      const params = new HttpParams()
+      .set('client', 'cognitive')
+      .set('client_password', '59kjGu3WXm')
+      .set('layer', 'cfsr_hourly_obs:windspeed:700hPa')
+      .append('layer', 'cfsr_hourly_obs:winddirection_deg:700hPa')
+      .append('layer', 'cfsr_hourly_obs:temp:250hPa')
+      .set('latitude', latitude.toString())
+      .set('longitude', longitude.toString())
+      .set('start', start.toString())
+      .set('end', end.toString());
 
+      return this.http.get(`${this.baseUrl}?${params.toString()}`,{
+         responseType: 'text', 
+       });
+    };
+  }
 
   
-}
+
 
