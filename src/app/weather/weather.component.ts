@@ -20,12 +20,12 @@ export class WeatherComponent implements OnInit {
   private markersSet = new Set<string>();
   private markers: L.Marker[] = []; // Array to store all markers
   isCustomWeatherDataVisible: boolean = false;
-
+ 
   constructor(private weatherService: WeatherService) { }
 
   ngOnInit(): void {
     this.initializeMap();
-    // this.fetchWeatherData();
+   
   }
 
   private initializeMap(): void {
@@ -35,18 +35,20 @@ export class WeatherComponent implements OnInit {
     }).addTo(this.map);
 
     this.map.on('moveend', () => {
-      this.fetchWeatherData();
+      this.fetchForecastData();
     });
+   
   }
 
   toggleForecastData(): void {
     if (this.isCustomWeatherDataVisible) {
       this.clearData();
     } else {
-      this.fetchWeatherData();
+      this.fetchForecastData();
     }
     this.isCustomWeatherDataVisible = !this.isCustomWeatherDataVisible;
   }
+
 
 
   clearData(): void {
@@ -54,7 +56,7 @@ export class WeatherComponent implements OnInit {
     this.markers = [];
   }
 
-  fetchWeatherData(): void {
+  fetchForecastData(): void {
     const center = this.map.getCenter();
     const lat = center.lat;
     const lon = center.lng;
@@ -68,7 +70,7 @@ export class WeatherComponent implements OnInit {
           }
           this.forecastData = result;
           console.log('ForecastData:', this.forecastData);
-          this.displayWeatherMarkers();
+          this.displayForecastData();
         });
       },
       error: (err) => {
@@ -78,7 +80,7 @@ export class WeatherComponent implements OnInit {
   }
 
 
-  displayWeatherMarkers(): void {
+  displayForecastData(): void {
     const location = this.forecastData?.report?.location?.[0];
     if (location) {
       const cityName = location.$.city_name;
@@ -121,6 +123,9 @@ export class WeatherComponent implements OnInit {
       this.markersLayer.addTo(this.map);
     }
   }
+
+
+ 
 }
 
 
