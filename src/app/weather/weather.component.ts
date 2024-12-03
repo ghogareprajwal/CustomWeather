@@ -67,6 +67,8 @@ export class WeatherComponent implements OnInit {
   clearData(): void {
     this.markers.forEach((marker) => this.map.removeLayer(marker));
     this.markers = [];
+    this.markersSet.clear();
+    this.markersLayer.clearLayers();
   }
 
   fetchForecastData(): void {
@@ -75,16 +77,11 @@ export class WeatherComponent implements OnInit {
     const lon = center.lng;
     this.weatherService.getWeatherData(lat, lon).subscribe({
       next: (data) => {
-        console.log(data)
-        parseString(data, (err: any, result: any) => {
-          if (err) {
-            console.error('Error parsing XML:', err);
-            return;
+          if (data) {
+            this.weatherData = data;
+            console.log('ForecastData:', this.weatherData);
+            this.displayForecastData();
           }
-          this.weatherData = result;
-          console.log('ForecastData:', this.weatherData);
-          this.displayForecastData();
-        });
       },
       error: (err) => {
         console.error('Error fetching forecast data:', err);
@@ -94,17 +91,16 @@ export class WeatherComponent implements OnInit {
 
 
   displayForecastData(): void {
-    const location = this.weatherData?.report?.location?.[0];
-    if (location) {
-      const cityName = location.$.city_name;
-      const latitude = parseFloat(location.$.latitude);
-      const longitude = parseFloat(location.$.longitude);
-      const temperature = location.forecast[0]?.$.temperature || 'N/A';
-      const description = location.forecast[0]?.$.description || 'N/A';
-      const Visibility = location.forecast[0]?.$.visibility || 'N/A';
-      const WindSpeed = location.forecast[0]?.$.wind_speed || 'N/A';
-      const Humidity = location.forecast[0]?.$.humidity || 'N/A';
-      const DewPoint = location.forecast[0]?.$.dew_point || 'N/A';
+    const weatherData = this.weatherData?.report;
+      const cityName = weatherData.city_name;
+      const latitude = parseFloat(weatherData.latitude);
+      const longitude = parseFloat(weatherData.longitude);
+      const temperature = weatherData.location.forecast[0]?.temperature || 'N/A';
+      const description = weatherData.location.forecast[0]?.description || 'N/A';
+      const Visibility = weatherData.location.forecast[0]?.visibility || 'N/A';
+      const WindSpeed = weatherData.location.forecast[0]?.wind_speed || 'N/A';
+      const Humidity = weatherData.location.forecast[0]?.humidity || 'N/A';
+      const DewPoint = weatherData.location.forecast[0]?.dew_point || 'N/A';
 
       const markerId = `${latitude},${longitude}`; // Create a unique key from latitude and longitude
 
@@ -134,7 +130,6 @@ export class WeatherComponent implements OnInit {
       marker.bindPopup(popupContent);
       this.markersLayer.addLayer(marker);
       this.markersLayer.addTo(this.map);
-    }
   }
 
 

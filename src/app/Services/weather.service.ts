@@ -9,27 +9,10 @@ export class WeatherService {
 
   private apiUrl = 'https://xml.customweather.com/xml';
   private baseUrl = 'http://cws.customweather.com/data';
-  // private client = 'cognitive'; // Add your client ID
-  // private clientPassword = '59kjGu3WXm'; // Add your client password
 
   constructor(private http: HttpClient) { }
 
-  // getWeatherData(lat: number, lon: number): Observable<any> {
-  //   const params = new URLSearchParams({
-  //     client: 'cognitive',
-  //     client_password: '59kjGu3WXm',
-  //     product: 'hourly_forecast',
-  //     latitude: lat.toString(),
-  //     longitude: lon.toString(),
-  //   });
-  //   const url = `${this.apiUrl}?${params}`;
-  //   const headers = new HttpHeaders({
-  //     'Accept': 'application/json'
-  //   });
-  //   return this.http.get(url, { headers });
-  // }
-
-  getWeatherData(lat: number, lon: number): Observable<string> {
+  getWeatherData(lat: number, lon: number): Observable<any> {
     const params = new URLSearchParams({
       client: 'cognitive',
       client_password: '59kjGu3WXm',
@@ -37,11 +20,14 @@ export class WeatherService {
       latitude: lat.toString(),
       longitude: lon.toString(),
     });
-
-    return this.http.get(`${this.apiUrl}?${params.toString()}`, {
-      responseType: 'text',
+    const url = `${this.apiUrl}?${params}`;
+    const headers = new HttpHeaders({
+      'Accept': 'application/json'
     });
+    return this.http.get(url, { headers });
   }
+
+  
 
   getCustomWeatherData(
     latitude: number,
