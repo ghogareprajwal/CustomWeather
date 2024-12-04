@@ -49,7 +49,33 @@ export class WeatherService {
       return this.http.get(`${this.baseUrl}?${params.toString()}`,{
          responseType: 'text', 
        });
-    };
+    }
+
+
+
+    getFlightLevelWeatherDaTa(
+      latitude: number,
+      longitude: number,
+      start: string,
+      end: string
+    ): Observable<any> {
+      const params = new HttpParams()
+        .set('client', 'cognitive')
+        .set('client_password', '59kjGu3WXm')
+        .set('layer', 'gfs0p25hourly:windspeed:500hPa')
+        .append('layer', 'gfs0p25hourly:winddirection_deg:500hPa')
+        .append('layer', 'gfs0p25hourly:cloud_cover:blcll')
+        .append('layer', 'gfs0p25hourly:cape:sfc')
+        .set('cws.init_time', 'latest')
+        .set('latitude', latitude.toString())
+        .set('longitude', longitude.toString())
+        .set('start', start.toString())
+        .set('end', end.toString());
+  
+        return this.http.get(`${this.baseUrl}?${params.toString()}`,{
+          responseType: 'text', 
+        });
+    }
   }
 
   

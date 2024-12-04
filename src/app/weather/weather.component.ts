@@ -21,6 +21,8 @@ export class WeatherComponent implements OnInit {
   private markers: L.Marker[] = []; // Array to store all markers
   isCustomWeatherDataVisible: boolean = false;
   iscwsCustomWeatherDataVisible: boolean = false;
+  isFlightLevelWeatherData: boolean = false;
+
 
 
   constructor(private weatherService: WeatherService) { }
@@ -35,13 +37,16 @@ export class WeatherComponent implements OnInit {
       maxZoom: 19,
     }).addTo(this.map);
 
-  
+
     this.map.on('moveend', () => {
       if (this.isCustomWeatherDataVisible) {
         this.fetchForecastData();
       }
       else if (this.iscwsCustomWeatherDataVisible) {
         this.fetchCustomWeatherData();
+      }
+      else if (this.isFlightLevelWeatherData) {
+        this.featchFlightLevelWeatherData();
       }
     });
   }
@@ -55,13 +60,22 @@ export class WeatherComponent implements OnInit {
     this.isCustomWeatherDataVisible = !this.isCustomWeatherDataVisible;
   }
 
-  toggleCWSData(): void {
+  toggleCustomWeatherData(): void {
     if (this.iscwsCustomWeatherDataVisible) {
       this.clearData();
     } else {
       this.fetchCustomWeatherData();
     }
     this.iscwsCustomWeatherDataVisible = !this.iscwsCustomWeatherDataVisible;
+  }
+
+  toggleFlightLevelWeatherData(): void {
+    if (this.isFlightLevelWeatherData) {
+      this.clearData();
+    } else {
+      this.featchFlightLevelWeatherData();
+    }
+    this.isFlightLevelWeatherData = !this.isFlightLevelWeatherData;
   }
 
   clearData(): void {
@@ -77,11 +91,11 @@ export class WeatherComponent implements OnInit {
     const lon = center.lng;
     this.weatherService.getWeatherData(lat, lon).subscribe({
       next: (data) => {
-          if (data) {
-            this.weatherData = data;
-            console.log('ForecastData:', this.weatherData);
-            this.displayForecastData();
-          }
+        if (data) {
+          this.weatherData = data;
+          console.log('ForecastData:', this.weatherData);
+          this.displayForecastData();
+        }
       },
       error: (err) => {
         console.error('Error fetching forecast data:', err);
@@ -92,15 +106,18 @@ export class WeatherComponent implements OnInit {
 
   displayForecastData(): void {
     const weatherData = this.weatherData?.report;
-      const cityName = weatherData.city_name;
-      const latitude = parseFloat(weatherData.latitude);
-      const longitude = parseFloat(weatherData.longitude);
-      const temperature = weatherData.location.forecast[0]?.temperature || 'N/A';
-      const description = weatherData.location.forecast[0]?.description || 'N/A';
-      const Visibility = weatherData.location.forecast[0]?.visibility || 'N/A';
-      const WindSpeed = weatherData.location.forecast[0]?.wind_speed || 'N/A';
-      const Humidity = weatherData.location.forecast[0]?.humidity || 'N/A';
-      const DewPoint = weatherData.location.forecast[0]?.dew_point || 'N/A';
+    const cityName = weatherData.city_name;
+    const latitude = parseFloat(weatherData.latitude);
+    const longitude = parseFloat(weatherData.longitude);
+    const forecasts = weatherData.location.forecast
+
+    forecasts.forEach((forecast: any) => {
+      const description = forecast?.description || 'N/A';
+      const temperature = forecast?.temperature || 'N/A';
+      const WindSpeed = forecast?.wind_speed || 'N/A';
+      const Visibility = forecast?.visibility || 'N/A';
+      const Humidity = forecast?.humidity || 'N/A';
+      const DewPoint = forecast?.dew_point || 'N/A';
 
       const markerId = `${latitude},${longitude}`; // Create a unique key from latitude and longitude
 
@@ -130,6 +147,8 @@ export class WeatherComponent implements OnInit {
       marker.bindPopup(popupContent);
       this.markersLayer.addLayer(marker);
       this.markersLayer.addTo(this.map);
+
+    })
   }
 
 
@@ -137,13 +156,13 @@ export class WeatherComponent implements OnInit {
     const center = this.map.getCenter();
     const lat = center.lat;
     const lon = center.lng;
-    const now = new Date(); 
+    const now = new Date();
     const endTime = now.toISOString(); // Current time as end time
     const startTime = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString(); // Subtract 48 hours (2 days)
 
     this.weatherService.getCustomWeatherData(lat, lon, startTime, endTime).subscribe({
       next: (data) => {
-        console.log('API Response:', data);
+        console.log('Custom WeatherData API Response:', data);
 
         parseString(data, (err: any, result: any) => {
           if (err) {
@@ -151,7 +170,7 @@ export class WeatherComponent implements OnInit {
             return;
           }
 
-          console.log('Parsed XML Result:', result);
+          console.log('Parsed Custom WeatherData Result:', result);
           this.weatherData = result;
           this.displayCustomWeatherData();
 
@@ -195,6 +214,74 @@ export class WeatherComponent implements OnInit {
           <strong>WindDirectionData:</strong> ${report.model[0].variable[1].data[0] || 'N/A'}<br>
           <strong>TemperatureData:</strong> ${report.model[0].variable[2].data[0] || 'N/A'}
         `;
+      marker.bindPopup(popupContent);
+      this.markersLayer.addLayer(marker);
+      this.markersLayer.addTo(this.map);
+
+    });
+  }
+
+  featchFlightLevelWeatherData(): void {
+    const center = this.map.getCenter();
+    const lat = center.lat;
+    const lon = center.lng;
+    const now = new Date();
+    const endTime = now.toISOString(); // Current time as end time
+    const startTime = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
+
+    this.weatherService.getFlightLevelWeatherDaTa(lat, lon, startTime, endTime).subscribe({
+      next: (data) => {
+        console.log('Flight Level Weather API Response:', data);
+
+        parseString(data, (err: any, result: any) => {
+          if (err) {
+            console.error('Error parsing XML:', err);
+            return;
+          }
+
+          console.log('Parsed Flight Level Weather Result:', result);
+          this.weatherData = result;
+          this.displayFlightLevelWeatherData();
+        });
+      },
+      error: (err) => {
+        console.error('Error fetching data from new API:', err);
+      },
+    });
+  }
+
+  displayFlightLevelWeatherData(): void {
+    if (!this.weatherData || !this.weatherData.cws?.report?.[0]) {
+      console.error('Invalid forecast data format');
+      return;
+    }
+
+    const reports = this.weatherData.cws.report; // Extract all reports
+    reports.forEach((report: any) => {
+      const lat = parseFloat(report.$?.latitude);
+      const lon = parseFloat(report.$?.longitude);
+      const markerId = `${lat},${lon}`; // Create a unique key from latitude and longitude
+
+      if (this.markersSet.has(markerId)) {
+        return;
+      }
+      // Add the marker ID to the set
+      this.markersSet.add(markerId);
+      const customIcon = L.icon({
+        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+      });
+
+      const marker = L.marker([lat, lon], { icon: customIcon });
+      const popupContent = `
+        <strong>Location:</strong>${report.$?.nearest_city_name || 'Unknown'}<br>
+        <strong>Elevation:</strong> ${report.$?.elevation || 'N/A'}<br>
+        <strong>WindSpeedData:</strong> ${report.model[0].variable[0].data[0] || 'N/A'}<br>
+        <strong>WindDirectionData:</strong> ${report.model[0].variable[1].data[0] || 'N/A'}<br>
+        <strong>CloudCoverData:</strong> ${report.model[0].variable[2].data[0] || 'N/A'}
+      `;
       marker.bindPopup(popupContent);
       this.markersLayer.addLayer(marker);
       this.markersLayer.addTo(this.map);
